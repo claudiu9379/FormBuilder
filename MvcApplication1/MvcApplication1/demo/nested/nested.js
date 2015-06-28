@@ -61,6 +61,10 @@ function NestedListsDemoController($scope) {
 		this.name = "";
 		this.cssValues = new CssValues();
 		this.cssValues.addItem("control-label");
+		this.cssValues.addItem("col-sm-1");
+		this.cssValues.addItem("col-sm-2");
+		this.cssValues.addItem("col-sm-3");
+
 		this.id = "";
 		this.model = "";
 		this.value = "";
@@ -116,10 +120,15 @@ function NestedListsDemoController($scope) {
 		this.required = false;
 		this.model = "";
 		this.value = "";
-		this.label = new label();
 		this.css = "";
 		this.placeholder = "";
-		this.render1 = function() {
+		this.controlGroup = false;
+		this.formGroup = true;
+
+		this.label = new label();
+		
+		this.glyph = new glyph();
+		this.renderControlGroup = function() {
 			var rez = "";
 			rez = rez + "<div class=\"control-group\">"
 			if (this.label && this.label.ignore == false) {
@@ -166,7 +175,7 @@ function NestedListsDemoController($scope) {
 			return rez;
 		};
 
-		this.render0 = function() {
+		this.renderFormGroup = function() {
 			var rez = "";
 			rez = rez + "<div class=\"form-group\">"
 			if (this.label && this.label.ignore == false) {
@@ -209,7 +218,16 @@ function NestedListsDemoController($scope) {
 		}
 
 		this.render = function() {
-			return this.render1();
+		    if (this.controlGroup)
+		    {
+		        return this.renderControlGroup();
+		    }
+		    if (this.formGroup)
+		    {
+		        return this.renderFormGroup();
+		    }
+
+		     return this.renderFormGroup();
 		}
 	};
 
@@ -259,7 +277,100 @@ function NestedListsDemoController($scope) {
 			return rez;
 		}
 	}
-	$scope.renderAll = function() {
+
+	var glyph = function() {
+		this.type = "glyph";
+		this.model = "";
+		this.value = "";
+		this.css = "";
+
+		this.render = function() {
+			var rez = " <span class=\"glyphicon ";
+			rez += this.cssValues;
+			if(this.model != "")
+			{
+				rez += "{{" + this.model + "}}"; 
+			}else{
+				rez = rez + "\"";
+			
+			}
+			return rez;
+		}
+	};
+
+	var button = function() {
+		this.type = "button";
+		this.name = "";
+		this.id = "";
+		this.required = false;
+		this.model = "";
+		this.value = "";
+		this.css = "";
+		this.placeholder = "";
+		this.controlGroup = false;
+		this.formGroup = true;
+
+		this.label = new label();
+		
+		
+		this.cssValues = new CssValues();
+		this.cssValues.addItem("control-label");
+		this.cssValues.addItem("col-sm-1");
+		this.cssValues.addItem("col-sm-2");
+		this.cssValues.addItem("col-sm-3");
+
+
+		this.render = function() {
+			var rez = "";
+			rez = rez + "<div class=\"form-group\">"
+			if (this.label && this.label.ignore == false) {
+				if (this.id == "") {
+					this.id = customGuid();
+				}
+				this.label.labelFor = this.id;
+				rez = rez + this.label.render();
+			}
+			rez = rez + "<input type=\"text\"";
+
+			if (this.id != "") {
+				rez = rez + " id=\"" + this.id + "\"";
+			}
+
+			if (this.name != "") {
+				rez = rez + " name=\"" + this.name + "\"";
+			}
+
+			if (this.css != "") {
+				rez = rez + " class=\"" + this.css + "\"";
+			}
+
+			if (this.placeholder != "") {
+				rez = rez + " placeholder=\"" + this.placeholder + "\"";
+			}
+
+			if (this.model != "") {
+				rez = rez + " ng-model=\"" + this.model + "\"";
+			} else {
+				if (this.value != "") {
+					rez = rez + " value=\"" + this.value + "\"";
+				}
+			}
+
+			rez = rez + "/>" + '\n';
+
+			rez = rez + "</div>"
+			return rez;
+		}
+
+		this.render = function() {
+		   
+
+		     return this.render();
+		}
+	};
+
+
+	$scope.renderAll = function () {
 		$scope.models.htmlv = $scope.models.dropzones["dz1"].render();
 	}
 	$scope.models = {
@@ -286,7 +397,27 @@ function NestedListsDemoController($scope) {
 		],
 
 		dropzones: {
-			dz1: {
+		    dz1: {
+		        form:
+                    {
+				        renderStart :function()
+				        {
+				            var rez  = "<div class=\"container\">" + '\n';
+				            rez +=  "<div class=\"panel panel-default\">"+ '\n';
+				            rez +=  "<div class=\"panel-body form-horizontal payment-form\">" + '\n';
+
+				            return rez;
+				        },
+
+                        renderEnd :function()
+						{
+						    var rez  = "</div>"+ '\n';
+						    rez  += "</div>"+ '\n';
+						     rez  += "</div>"+ '\n';
+
+						    return rez;
+						}
+                    },
 				items: [],
 				add: function(index, obj) {
 					if (obj == null || obj == "")
@@ -312,11 +443,15 @@ function NestedListsDemoController($scope) {
 
 				},
 				render: function() {
-					var rez = "";
+					var model = $scope.models.dropzones["dz1"];
+					var rez = model.form.renderStart();
 
-					for (var i = 0; i < $scope.models.dropzones["dz1"].items.length; i++) {
-						rez = rez + $scope.models.dropzones["dz1"].items[i].render();
+					for (var i = 0; i < model.items.length; i++) {
+						rez = rez + model.items[i].render();
 					}
+
+					rez = rez + model.form.renderEnd();
+
 					return rez;
 				}
 			}
