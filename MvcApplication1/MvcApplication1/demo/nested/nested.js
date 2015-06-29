@@ -21,6 +21,13 @@ function NestedListsDemoController($scope) {
 		}
 	};
 
+	var hasValue = function (val)
+	{
+	    var rez = true;
+	    if (val == undefined || val == null || val == "")
+	        rez = false;
+	    return rez;
+	}
 	var customGuid = function() {
 		function _p8(s) {
 			var p = (Math.random().toString(16) + "000000000").substr(2, 8);
@@ -36,11 +43,12 @@ function NestedListsDemoController($scope) {
 			if (this.items == undefined) {
 				return;
 			}
-			this.items.push({
-				useThis: false,
-				css: val
-			});
-
+			var it = {
+			    useThis: false,
+			    css: val
+			};
+			this.items.push(it);
+			return it;
 		}
 
 		this.getCss = function() {
@@ -56,6 +64,18 @@ function NestedListsDemoController($scope) {
 		}
 	};
 
+	var validation = function ()
+	{
+	    this.items = [];
+	    this.items.push(
+            {
+                required: false,
+                message:"Required"
+            }
+            );
+
+	}
+
 	var label = function() {
 		this.type = "label";
 		this.name = "";
@@ -63,16 +83,23 @@ function NestedListsDemoController($scope) {
 		this.cssValues.addItem("control-label");
 		this.cssValues.addItem("col-sm-1");
 		this.cssValues.addItem("col-sm-2");
-		this.cssValues.addItem("col-sm-3");
+		var sameLineCss  = this.cssValues.addItem("col-sm-3");
 
 		this.id = "";
 		this.model = "";
 		this.value = "";
 		this.labelFor = "";
-		this.ignore = false;
+		this.sameLine = false;
 
 		this.render = function() {
-			var rez = "";
+		    var rez = "";
+		    if (this.value == "" && this.model == "")
+		        return rez;
+
+		    if (this.sameLine)
+		    {
+		        sameLineCss.useThis = true;
+		    }
 			rez = "<label ";
 
 			if (this.labelFor != "") {
@@ -120,114 +147,111 @@ function NestedListsDemoController($scope) {
 		this.required = false;
 		this.model = "";
 		this.value = "";
-		this.css = "";
+		this.cssValues = new CssValues();
+		var frmControl = this.cssValues.addItem("form-control");
+		this.cssValues.addItem("col-sm-1");
+		this.cssValues.addItem("col-sm-2");
+		this.cssValues.addItem("col-sm-3");
+
 		this.placeholder = "";
-		this.controlGroup = false;
-		this.formGroup = true;
+		//this.controlGroup = false;
+		this.sameLine = true;
+
+		this.validation = new validation();
 
 		this.label = new label();
 		
 		this.glyph = new glyph();
-		this.renderControlGroup = function() {
-			var rez = "";
-			rez = rez + "<div class=\"control-group\">"
-			if (this.label && this.label.ignore == false) {
-				if (this.id == "") {
-					this.id = customGuid();
-				}
-				this.label.labelFor = this.id;
-				rez = rez + this.label.render();
-			}
+		this.renderInput = function ()
+		{
+		    var rez = "";
+		    if (hasValue(this.glyph.css)) {
+		        frmControl.useThis = true;
+		    } else {
+		        frmControl.useThis = false;
+		    }
+		    if (this.label) {
+		        if (this.id == "") {
+		            this.id = customGuid();
+		        }
+		        this.label.labelFor = this.id;
+		        rez = rez + this.label.render();
+		    }
 
-			rez = rez + "<div class=\"controls\">"
+		    if (hasValue(this.glyph.css))
+		    {
+		        rez += "<div class=\"input-group col-xs-3\">" + "\n";
+		    }
+		    rez = rez + "<input type=\"text\"";
 
+		    if (this.id != "") {
+		        rez = rez + " id=\"" + this.id + "\"";
+		    }
 
-			rez = rez + "<input type=\"text\"";
+		    if (this.name != "") {
+		        rez = rez + " name=\"" + this.name + "\"";
+		    }
 
-			if (this.id != "") {
-				rez = rez + " id=\"" + this.id + "\"";
-			}
+		    if (this.css != "") {
+		        rez = rez + " class=\"" + this.cssValues.getCss() + "\"";
+		    }
 
-			if (this.name != "") {
-				rez = rez + " name=\"" + this.name + "\"";
-			}
+		    if (this.placeholder != "") {
+		        rez = rez + " placeholder=\"" + this.placeholder + "\"";
+		    }
 
-			if (this.css != "") {
-				rez = rez + " class=\"" + this.css + "\"";
-			}
+		    if (this.model != "") {
+		        rez = rez + " ng-model=\"" + this.model + "\"";
+		    } else {
+		        if (this.value != "") {
+		            rez = rez + " value=\"" + this.value + "\"";
+		        }
+		    }
 
-			if (this.placeholder != "") {
-				rez = rez + " placeholder=\"" + this.placeholder + "\"";
-			}
+		    rez = rez + "/>" + '\n';
 
-			if (this.model != "") {
-				rez = rez + " ng-model=\"" + this.model + "\"";
-			} else {
-				if (this.value != "") {
-					rez = rez + " value=\"" + this.value + "\"";
-				}
-			}
+		    if (hasValue(this.glyph.css))
+		    {
+		        rez += "<span class=\"input-group-btn\">" + "\n";
+		        rez += "            <button class=\"btn btn-success btn-add\" type=\"button\">" + "\n";
+		        rez += "                <span class=\"glyphicon glyphicon-plus\"></span>" + "\n";
+		        rez += "            </button>" + "\n";
+		        rez += "        </span>" + "\n";
+		        rez += "        </div>" + "\n";
+		    }
 
-			rez = rez + "/>" + '\n';
-
-			rez = rez + "</div>"
-			rez = rez + "</div>"
-			return rez;
-		};
+		    return rez;
+		}
+		//this.renderControlGroup = function() {
+		//	var rez = "";
+		//	rez = rez + "<div class=\"control-group\">" + "\n";
+		//	rez += this.renderInput();
+		//	rez += "</div>" + "\n";
+		//	return rez;
+		//};
 
 		this.renderFormGroup = function() {
 			var rez = "";
-			rez = rez + "<div class=\"form-group\">"
-			if (this.label && this.label.ignore == false) {
-				if (this.id == "") {
-					this.id = customGuid();
-				}
-				this.label.labelFor = this.id;
-				rez = rez + this.label.render();
-			}
-			rez = rez + "<input type=\"text\"";
-
-			if (this.id != "") {
-				rez = rez + " id=\"" + this.id + "\"";
-			}
-
-			if (this.name != "") {
-				rez = rez + " name=\"" + this.name + "\"";
-			}
-
-			if (this.css != "") {
-				rez = rez + " class=\"" + this.css + "\"";
-			}
-
-			if (this.placeholder != "") {
-				rez = rez + " placeholder=\"" + this.placeholder + "\"";
-			}
-
-			if (this.model != "") {
-				rez = rez + " ng-model=\"" + this.model + "\"";
-			} else {
-				if (this.value != "") {
-					rez = rez + " value=\"" + this.value + "\"";
-				}
-			}
-
-			rez = rez + "/>" + '\n';
+			rez = rez + "<div class=\"form-group\">" + "\n";
+			
+			rez += this.renderInput();
 
 			rez = rez + "</div>"
 			return rez;
 		}
 
-		this.render = function() {
-		    if (this.controlGroup)
-		    {
-		        return this.renderControlGroup();
-		    }
-		    if (this.formGroup)
-		    {
-		        return this.renderFormGroup();
-		    }
+		this.render = function () {
+		    return this.renderFormGroup();
 
-		     return this.renderFormGroup();
+		    //if (this.sameLine)
+		    //{
+		        
+		        
+		    //}
+            //else
+		    //{
+		    //    return this.renderControlGroup();
+		    //}
 		}
 	};
 
@@ -243,7 +267,7 @@ function NestedListsDemoController($scope) {
 
 		this.render = function() {
 			var rez = "";
-			if (this.label && this.label.ignore == false) {
+			if (this.label) {
 				if (this.id == "") {
 					this.id = customGuid();
 				}
@@ -322,8 +346,8 @@ function NestedListsDemoController($scope) {
 
 		this.render = function() {
 			var rez = "";
-			rez = rez + "<div class=\"form-group\">"
-			if (this.label && this.label.ignore == false) {
+			rez = rez + "<div class=\"form-group\">" + "\n";
+			if (this.label) {
 				if (this.id == "") {
 					this.id = customGuid();
 				}
