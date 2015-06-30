@@ -64,17 +64,75 @@ function NestedListsDemoController($scope) {
 		}
 	};
 
-	var validation = function ()
-	{
+	var validation = function () {
+	    
 	    this.items = [];
-	    this.items.push(
-            {
-                required: false,
-                message:"Required"
-            }
-            );
+	    this.addItem = function (directive, message, model, directiveValue) {
+	        if (this.items == undefined) {
+	            return;
+	        }
+	        this.items.push({
+	            use: false,
+	            directive: directive,
+	            directiveValue: directiveValue,
+	            message: {
+	                message: message,
+	                model: model
+	            }
+	        });
 
-	}
+	    }
+
+	    this.addItem("required", "required", "");
+	    this.addItem("number", "Type a numeric value", "");
+	    this.addItem("maxLength", "Max length", "", 10);
+
+	    var ctrlName = "";
+	    this.setControlName = function (ctrlNameValue) {
+	        ctrlName = ctrlNameValue;
+	    };
+	    this.getControlName = function () {
+	        return ctrlName;
+	    };
+
+
+	    this.render = function () {
+	        var rez = "";
+	        for (var i = 0; i < this.items.length; i++) {
+	            var it = this.items[i];
+	            if (it.use == false)
+	                continue;
+
+	            var frm = $scope.models.dropzones["dz1"].form.name;
+	            rez = rez + "<span ng-show=\"" + frm + "." + this.getControlName() + ".$error." + it.directive + "\"";
+                rez += " && !" + frm + ".$pristine" +"\"" + " class="+ "\"" + "error" + "\""+ ">";
+	            if (hasValue(it.message.message)) {
+	                rez += it.message.message + "</span>" + "\n";
+	            } else {
+	                rez += it.message.model + "</span>" + "\n";
+	            }
+	            
+	        }
+	        return rez;
+	    }
+
+	    this.renderValidationDirectives = function () {
+	        var rez = " ";
+	        for (var i = 0; i < this.items.length; i++) {
+	            var it = this.items[i];
+	            if (it.use == false)
+	                continue;
+
+	            if (hasValue(it.directiveValue)) {
+	                //rez = rez +  it.directive +  "<span ng-show=\"" + $scope.dz1.form.name +"."+  ctrlName  + "$error."+ it.directive  +  "\"" + ">" + it.message + "</span>" + "\n";	
+	            } else {
+	                rez = rez + it.directive + " ";
+	            }
+
+	        }
+	        return rez;
+	    }
+	};
 
 	var label = function() {
 		this.type = "label";
@@ -144,7 +202,7 @@ function NestedListsDemoController($scope) {
 		this.type = "text";
 		this.name = "";
 		this.id = "";
-		this.required = false;
+		
 		this.model = "";
 		this.value = "";
 		this.cssValues = new CssValues();
@@ -155,13 +213,33 @@ function NestedListsDemoController($scope) {
 
 		this.placeholder = "";
 		//this.controlGroup = false;
-		this.sameLine = true;
 
 		this.validation = new validation();
-
 		this.label = new label();
 		
 		this.glyph = new glyph();
+
+		this.controlType =
+			[
+			{
+			    mode: "text",
+			    use: true
+			},
+			{
+			    mode: "email",
+			    use: false
+			},
+			{
+			    mode: "number",
+			    use: false
+			},
+				{
+				    mode: "password",
+				    use: false
+				}
+                
+			];
+
 		this.renderInput = function ()
 		{
 		    var rez = "";
@@ -170,7 +248,7 @@ function NestedListsDemoController($scope) {
 		    } else {
 		        frmControl.useThis = false;
 		    }
-		    if (this.label) {
+		    if (hasValue(this.label.value) || hasValue(this.label.model)) {
 		        if (this.id == "") {
 		            this.id = customGuid();
 		        }
@@ -180,15 +258,31 @@ function NestedListsDemoController($scope) {
 
 		    if (hasValue(this.glyph.css))
 		    {
-		        rez += "<div class=\"input-group col-xs-3\">" + "\n";
+		        rez += "<div class=\"col-xs-3\">" + "\n";
+		        rez += "<div class=\"input-group\">" + "\n";
 		    }
-		    rez = rez + "<input type=\"text\"";
 
-		    if (this.id != "") {
+		    var type = _.find(this.controlType, function (num) { return num.use });
+		    rez = rez + "<input type=\"" + type.mode + "\"";
+
+		    if (hasValue(this.id)) {
 		        rez = rez + " id=\"" + this.id + "\"";
 		    }
 
-		    if (this.name != "") {
+		    var hasValidation = _.find(this.validation.items, function(num){ return num.use });
+		    if (hasValidation)
+		    {
+		        if (hasValue(this.name) == false) {
+		            if (hasValue(this.id) == false) {
+		                this.name = customGuid();
+		            } else {
+		                this.name = this.id;
+		            }
+		        }
+		        this.validation.setControlName(this.name);
+		    }
+
+		    if (hasValue(this.name)) {
 		        rez = rez + " name=\"" + this.name + "\"";
 		    }
 
@@ -207,6 +301,7 @@ function NestedListsDemoController($scope) {
 		            rez = rez + " value=\"" + this.value + "\"";
 		        }
 		    }
+		    rez += this.validation.renderValidationDirectives();
 
 		    rez = rez + "/>" + '\n';
 
@@ -218,8 +313,9 @@ function NestedListsDemoController($scope) {
 		        rez += "            </button>" + "\n";
 		        rez += "        </span>" + "\n";
 		        rez += "        </div>" + "\n";
+		        rez += "        </div>" + "\n";
 		    }
-
+		    rez += this.validation.render();
 		    return rez;
 		}
 		//this.renderControlGroup = function() {
@@ -242,16 +338,6 @@ function NestedListsDemoController($scope) {
 
 		this.render = function () {
 		    return this.renderFormGroup();
-
-		    //if (this.sameLine)
-		    //{
-		        
-		        
-		    //}
-            //else
-		    //{
-		    //    return this.renderControlGroup();
-		    //}
 		}
 	};
 
@@ -424,21 +510,30 @@ function NestedListsDemoController($scope) {
 		    dz1: {
 		        form:
                     {
+                        name:"",
 				        renderStart :function()
 				        {
+				            if (!hasValue(this.name))
+				            {
+				                this.name = customGuid();
+				            }
 				            var rez  = "<div class=\"container\">" + '\n';
-				            rez +=  "<div class=\"panel panel-default\">"+ '\n';
-				            rez +=  "<div class=\"panel-body form-horizontal payment-form\">" + '\n';
+				            rez +=  "   <div class=\"panel panel-default\">"+ '\n';
+				            rez +=  "       <div class=\"panel-body\">" + '\n';
+
+				            rez += "            <ng-form name=" + this.name + "\"" + " class=\"form-horizontal\" novalidate>" + '\n';
 
 				            return rez;
 				        },
 
                         renderEnd :function()
-						{
-						    var rez  = "</div>"+ '\n';
+                        {
+                            var rez = "";
+                            rez += "            </ng-form>" + '\n'
+						    rez  = "        </div>"+ '\n';
 						    rez  += "</div>"+ '\n';
-						     rez  += "</div>"+ '\n';
-
+						    rez += "</div>"+ '\n';
+						     
 						    return rez;
 						}
                     },
