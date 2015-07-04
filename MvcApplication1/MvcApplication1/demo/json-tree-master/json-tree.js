@@ -34,7 +34,7 @@
                 '<span ng-show="(addTpl && node.isHighEditLevel) || false">' +
                     '<span ng-show="node.type() === \'object\'"><input type="text" ng-model="inputKey" placeholder="key"/>: <input type="text" ng-model="inputValue" placeholder="value"/></span>' +
                     '<span ng-show="node.type() === \'array\'"><input type="text" ng-model="inputValue" placeholder="value"/></span>' +
-                    '<button ng-click="utils.addNode(inputKey, inputValue); addTpl = false">+</button><button ng-click="addTpl = false">c</button>' +
+                   
                 '</span>';
 
             function getTemplatePromise() {

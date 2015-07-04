@@ -39,6 +39,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Dapper">
+      <HintPath>..\lib\Dapper.dll</HintPath>
+    </Reference>
+    <Reference Include="DapperExtensions">
+      <HintPath>..\lib\DapperExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="ESB.Repositories">
+      <HintPath>..\lib\ESB.Repositories.dll</HintPath>
+    </Reference>
+    <Reference Include="LambdaSqlBuilder">
+      <HintPath>..\lib\LambdaSqlBuilder.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -108,10 +120,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="1.Dapper_Without_Thacker.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>1.Dapper_Without_Thacker.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Controllers\FormsController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="JSONHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repo\FormsRepo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\FilterConfig.cs" />
@@ -122,8 +142,6 @@
     <Content Include="angular-sanitize.js" />
     <Content Include="angular.min.js" />
     <Content Include="demo\example.html" />
-    <Content Include="demo\framework\demo-framework.css" />
-    <Content Include="demo\framework\demo-framework.js" />
     <Content Include="demo\framework\vendor\bootstrap-theme.min.css" />
     <Content Include="demo\framework\vendor\bootstrap.min.css" />
     <Content Include="demo\framework\vendor\prism.css" />
@@ -155,7 +173,6 @@
     <Content Include="demo\nested\nested.css" />
     <Content Include="demo\nested\nested.html" />
     <Content Include="demo\nested\nested.js" />
-    <Content Include="demo\nested\trashcan.jpg" />
     <Content Include="Global.asax" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
@@ -168,7 +185,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Controllers\" />
     <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +211,15 @@
     <Content Include="demo\nested\bower_components\jquery-ui\package.json" />
     <Content Include="demo\nested\bower_components\jquery-ui\README.md" />
     <Content Include="demo\nested\bower_components\jquery\bower.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="1.Dapper_Without_Thacker.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>1.Dapper_Without_Thacker.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

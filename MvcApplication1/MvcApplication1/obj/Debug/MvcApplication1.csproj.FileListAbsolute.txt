@@ -20,3 +20,8 @@ d:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\bin\System
 d:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\obj\Debug\MvcApplication1.csprojResolveAssemblyReference.cache
 d:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\obj\Debug\MvcApplication1.dll
 d:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\obj\Debug\MvcApplication1.pdb
+D:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\bin\Dapper.dll
+D:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\bin\DapperExtensions.dll
+D:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\bin\ESB.Repositories.dll
+D:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\bin\LambdaSqlBuilder.dll
+D:\claudiu\Knowledge\_FormBuilder\_fb\MvcApplication1\MvcApplication1\bin\ESB.Utils.dll

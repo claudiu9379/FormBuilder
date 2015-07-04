@@ -9,11 +9,11 @@ json-tree {
     width: 4em;
     height: 12px;
 }*/
-json-tree input[type="number"]{
+/*json-tree input[type="number"]{
     width: 4em;
     height: 12px;
     vertical-align: middle;
-}
+}*/
 json-tree textarea {
     width: 5em;
     height: 12px;

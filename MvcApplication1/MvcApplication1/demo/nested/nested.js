@@ -1,15 +1,7 @@
-/**
- * The controller doesn't do much more than setting the initial data model
- */
-
-
-
 //var app = angular.module("demo").controller("NestedListsDemoController", function($scope) {
-var app = angular.module('demo');
+var app = angular.module('app', ['ngSanitize', 'json-tree']);
 
-function NestedListsDemoController($scope) {
-	//app.controller("NestedListsDemoController", function($scope,$sce) {
-
+app.controller("NestedListsDemoController", function($scope, $sce) {
 	$scope.trustAsHtml = function(string) {
 		return $sce.trustAsHtml(string);
 	};
@@ -21,12 +13,107 @@ function NestedListsDemoController($scope) {
 		}
 	};
 
-	var hasValue = function (val)
-	{
-	    var rez = true;
-	    if (val == undefined || val == null || val == "")
-	        rez = false;
-	    return rez;
+	$scope.findElement = function (e) {
+	    var id = e.target.id;
+	    if (id != undefined && id != null && id != "") {
+	        var el = _.find($scope.models.dropzones["dz1"].items, function (num) {
+	            return num.id == id;
+	        });
+
+	        if (el != undefined)
+	        {
+
+	        }
+	    }
+
+
+	};
+	
+
+	$scope.saveJson = function() {
+		$.ajax({ //58372  MvcRESTApplication
+			url: "/Forms/SaveJson",
+			type: 'POST',
+			data: {
+				formName: $scope.models.dropzones["dz1"].form.name,
+				json: JSON.stringify($scope.models.dropzones["dz1"])
+			},
+			cache: false,
+			success: function(val) {},
+			error: function(xhr, textStatus, errorThrown) {
+				//alert('request failed');
+				console.log(textStatus);
+			}
+		});
+	}
+
+	$scope.forms = [];
+	$scope.formID = 0;
+	$scope.getForms = function() {
+		$.ajax({ //58372  MvcRESTApplication
+			url: "/Forms/GetForms",
+			type: 'GET',
+			cache: false,
+			success: function(val) {
+
+				$scope.$apply(function() {
+					var fff = JSON.parse(val);
+					for (var i = 0; i < fff.length; i++) {
+						$scope.forms.push({
+							ID: fff[i].ID,
+							FormName: fff[i].FormName
+						});
+					}
+
+				});
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				//alert('request failed');
+				console.log(textStatus);
+			}
+		});
+	}
+
+
+	$scope.frm = {
+		formID: 0
+	}
+
+	$scope.$watch('frm.formID', function(model) {
+		if (!model)
+			return;
+		if (model == 0)
+			return;
+		$.ajax({ //58372  MvcRESTApplication
+			url: "/Forms/GetFormById",
+			type: 'POST',
+			data: {
+				id: model
+			},
+			cache: false,
+			success: function(val) {
+				var fff = JSON.parse(val);
+				var items = JSON.parse(fff.json);
+
+				$scope.$apply(function() {
+					//$scope.models.dropzones["dz1"] = items;
+					$scope.models.dropzones["dz1"].load(items);
+				});
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				//alert('request failed');
+				console.log(textStatus);
+			}
+		});
+	}, true);
+
+
+
+	var hasValue = function(val) {
+		var rez = true;
+		if (val == undefined || val == null || val == "")
+			rez = false;
+		return rez;
 	}
 	var customGuid = function() {
 		function _p8(s) {
@@ -35,7 +122,17 @@ function NestedListsDemoController($scope) {
 		}
 		return _p8(true);
 	};
+	var realMerge = function(to, from) {
+		for (n in from) {
+			if (typeof to[n] != 'object') {
+				to[n] = from[n];
+			} else if (typeof from[n] == 'object') {
+				to[n] = realMerge(to[n], from[n]);
+			}
+		}
 
+		return to;
+	};
 	var CssValues = function() {
 		this.css = "";
 		this.items = [];
@@ -44,8 +141,8 @@ function NestedListsDemoController($scope) {
 				return;
 			}
 			var it = {
-			    useThis: false,
-			    css: val
+				useThis: false,
+				css: val
 			};
 			this.items.push(it);
 			return it;
@@ -64,101 +161,135 @@ function NestedListsDemoController($scope) {
 		}
 	};
 
-	var validation = function () {
-	    
-	    this.items = [];
-	    this.addItem = function (directive, message, model, directiveValue) {
-	        if (this.items == undefined) {
-	            return;
-	        }
-	        this.items.push({
-	            use: false,
-	            directive: directive,
-	            directiveValue: directiveValue,
-	            message: {
-	                message: message,
-	                model: model
-	            }
-	        });
+	var validation = function() {
 
-	    }
+		this.items = [];
+		this.addItem = function(directive, message, model, directiveValue) {
+			if (this.items == undefined) {
+				return;
+			}
+			this.items.push({
+				use: false,
+				directive: directive,
+				directiveValue: directiveValue,
+				message: {
+					message: message,
+					model: model
+				}
+			});
 
-	    this.addItem("required", "required", "");
-	    this.addItem("number", "Type a numeric value", "");
-	    this.addItem("maxLength", "Max length", "", 10);
+		}
 
-	    var ctrlName = "";
-	    this.setControlName = function (ctrlNameValue) {
-	        ctrlName = ctrlNameValue;
-	    };
-	    this.getControlName = function () {
-	        return ctrlName;
-	    };
+		this.addItem("required", "required", "");
+		this.addItem("number", "Type a numeric value", "");
+		this.addItem("maxLength", "Max length", "", 10);
 
+		var ctrlName = "";
+		this.setControlName = function(ctrlNameValue) {
+			ctrlName = ctrlNameValue;
+		};
+		this.getControlName = function() {
+			return ctrlName;
+		};
 
-	    this.render = function () {
-	        var rez = "";
-	        for (var i = 0; i < this.items.length; i++) {
-	            var it = this.items[i];
-	            if (it.use == false)
-	                continue;
+		this.sameLine = false;
+		this.render = function() {
+		    var rez = "";
+		    var css = "error ";
+		    if (this.sameLine)
+		    {
+		        css += "col-sm-3";
+		    }
+			for (var i = 0; i < this.items.length; i++) {
+				var it = this.items[i];
+				if (it.use == false)
+					continue;
 
-	            var frm = $scope.models.dropzones["dz1"].form.name;
-	            rez = rez + "<span ng-show=\"" + frm + "." + this.getControlName() + ".$error." + it.directive + "\"";
-                rez += " && !" + frm + ".$pristine" +"\"" + " class="+ "\"" + "error" + "\""+ ">";
-	            if (hasValue(it.message.message)) {
-	                rez += it.message.message + "</span>" + "\n";
-	            } else {
-	                rez += it.message.model + "</span>" + "\n";
-	            }
-	            
-	        }
-	        return rez;
-	    }
+				var frm = $scope.models.dropzones["dz1"].form.name;
+				rez = rez + "<span ng-show=\"" + frm + "." + this.getControlName() + ".$error." + it.directive;
+				rez += " && !" + frm + ".$pristine" + "\"" + " class=" + "\"" + css + "\"" + ">";
+				if (hasValue(it.message.message)) {
+					rez += it.message.message + "</span>" + "\n";
+				} else {
+					rez += it.message.model + "</span>" + "\n";
+				}
 
-	    this.renderValidationDirectives = function () {
-	        var rez = " ";
-	        for (var i = 0; i < this.items.length; i++) {
-	            var it = this.items[i];
-	            if (it.use == false)
-	                continue;
+			}
+			return rez;
+		}
 
-	            if (hasValue(it.directiveValue)) {
-	                //rez = rez +  it.directive +  "<span ng-show=\"" + $scope.dz1.form.name +"."+  ctrlName  + "$error."+ it.directive  +  "\"" + ">" + it.message + "</span>" + "\n";	
-	            } else {
-	                rez = rez + it.directive + " ";
-	            }
+		this.renderValidationDirectives = function() {
+			var rez = " ";
+			for (var i = 0; i < this.items.length; i++) {
+				var it = this.items[i];
+				if (it.use == false)
+					continue;
 
-	        }
-	        return rez;
-	    }
+				if (hasValue(it.directiveValue)) {
+					//rez = rez +  it.directive +  "<span ng-show=\"" + $scope.dz1.form.name +"."+  ctrlName  + "$error."+ it.directive  +  "\"" + ">" + it.message + "</span>" + "\n";	
+				} else {
+					rez = rez + it.directive + " ";
+				}
+
+			}
+			return rez;
+		}
 	};
 
 	var label = function() {
-		this.type = "label";
+		this.type = "lbl";
 		this.name = "";
 		this.cssValues = new CssValues();
 		this.cssValues.addItem("control-label");
 		this.cssValues.addItem("col-sm-1");
 		this.cssValues.addItem("col-sm-2");
-		var sameLineCss  = this.cssValues.addItem("col-sm-3");
+		this.cssValues.addItem("col-sm-3");
 
 		this.id = "";
 		this.model = "";
 		this.value = "";
 		this.labelFor = "";
 		this.sameLine = false;
+		var isComplex = false;
+		this.index = 0;
+		this.group = 0;
+		this.isComplex = function(val) {
+			isComplex = val;
+		}
 
+		this.mustRender = function() {
+			var rez = false;
+			if (hasValue(this.value) || hasValue(this.model)) {
+				rez = true;
+			}
+			return rez;
+		}
+		var rendered = false;
+		this.setRenderToFalse = function () {
+		    rendered = false;
+		}
+		this.isRendered = function () {
+		    return rendered;
+		}
 		this.render = function() {
 		    var rez = "";
-		    if (this.value == "" && this.model == "")
+		    if (rendered)
 		        return rez;
+			if (this.value == "" && this.model == "")
+				return rez;
+			var css = "";
 
-		    if (this.sameLine)
-		    {
-		        sameLineCss.useThis = true;
-		    }
-			rez = "<label ";
+			if (this.sameLine) {
+			    this.cssValues.css = "col-sm-1";
+			} else {
+				if (isComplex) {
+				    //rez += "<div class=\"row\">" + "\n";
+				    rez += "<div class=\"col-xs-3 row\"><!--lbl-->" + "\n";
+				} else {
+				    rez += "<div>" + "<!--lbl1-->" + "\n";
+				}
+			}
+			rez += "<label ";
 
 			if (this.labelFor != "") {
 				rez = rez + " for=\"" + this.labelFor + "\"";
@@ -194,6 +325,15 @@ function NestedListsDemoController($scope) {
 				}
 			}
 
+			if (this.sameLine) {} else {
+			    if (isComplex) {
+			        rez += "</div>" + "<!--lbl-->" + "\n";
+			        //rez += "</div>" + "\n";
+			    } else {
+			        rez += "</div>" + "<!--lbl1-->" + "\n";
+			    }
+			}
+			rendered = true;
 			return rez;
 		}
 	};
@@ -202,7 +342,7 @@ function NestedListsDemoController($scope) {
 		this.type = "text";
 		this.name = "";
 		this.id = "";
-		
+
 		this.model = "";
 		this.value = "";
 		this.cssValues = new CssValues();
@@ -210,183 +350,368 @@ function NestedListsDemoController($scope) {
 		this.cssValues.addItem("col-sm-1");
 		this.cssValues.addItem("col-sm-2");
 		this.cssValues.addItem("col-sm-3");
+		this.cssValues.css = "form-control";
 
 		this.placeholder = "";
 		//this.controlGroup = false;
-
+		this.group = 0;
+		this.index = 0;
 		this.validation = new validation();
 		this.label = new label();
-		
+
 		this.glyph = new glyph();
 
-		this.controlType =
-			[
-			{
-			    mode: "text",
-			    use: true
-			},
-			{
-			    mode: "email",
-			    use: false
-			},
-			{
-			    mode: "number",
-			    use: false
-			},
-				{
-				    mode: "password",
-				    use: false
-				}
-                
-			];
-
-		this.renderInput = function ()
-		{
-		    var rez = "";
-		    if (hasValue(this.glyph.css)) {
-		        frmControl.useThis = true;
-		    } else {
-		        frmControl.useThis = false;
-		    }
-		    if (hasValue(this.label.value) || hasValue(this.label.model)) {
-		        if (this.id == "") {
-		            this.id = customGuid();
-		        }
-		        this.label.labelFor = this.id;
-		        rez = rez + this.label.render();
-		    }
-
-		    if (hasValue(this.glyph.css))
-		    {
-		        rez += "<div class=\"col-xs-3\">" + "\n";
-		        rez += "<div class=\"input-group\">" + "\n";
-		    }
-
-		    var type = _.find(this.controlType, function (num) { return num.use });
-		    rez = rez + "<input type=\"" + type.mode + "\"";
-
-		    if (hasValue(this.id)) {
-		        rez = rez + " id=\"" + this.id + "\"";
-		    }
-
-		    var hasValidation = _.find(this.validation.items, function(num){ return num.use });
-		    if (hasValidation)
-		    {
-		        if (hasValue(this.name) == false) {
-		            if (hasValue(this.id) == false) {
-		                this.name = customGuid();
-		            } else {
-		                this.name = this.id;
-		            }
-		        }
-		        this.validation.setControlName(this.name);
-		    }
-
-		    if (hasValue(this.name)) {
-		        rez = rez + " name=\"" + this.name + "\"";
-		    }
-
-		    if (this.css != "") {
-		        rez = rez + " class=\"" + this.cssValues.getCss() + "\"";
-		    }
-
-		    if (this.placeholder != "") {
-		        rez = rez + " placeholder=\"" + this.placeholder + "\"";
-		    }
-
-		    if (this.model != "") {
-		        rez = rez + " ng-model=\"" + this.model + "\"";
-		    } else {
-		        if (this.value != "") {
-		            rez = rez + " value=\"" + this.value + "\"";
-		        }
-		    }
-		    rez += this.validation.renderValidationDirectives();
-
-		    rez = rez + "/>" + '\n';
-
-		    if (hasValue(this.glyph.css))
-		    {
-		        rez += "<span class=\"input-group-btn\">" + "\n";
-		        rez += "            <button class=\"btn btn-success btn-add\" type=\"button\">" + "\n";
-		        rez += "                <span class=\"glyphicon glyphicon-plus\"></span>" + "\n";
-		        rez += "            </button>" + "\n";
-		        rez += "        </span>" + "\n";
-		        rez += "        </div>" + "\n";
-		        rez += "        </div>" + "\n";
-		    }
-		    rez += this.validation.render();
-		    return rez;
-		}
-		//this.renderControlGroup = function() {
-		//	var rez = "";
-		//	rez = rez + "<div class=\"control-group\">" + "\n";
-		//	rez += this.renderInput();
-		//	rez += "</div>" + "\n";
-		//	return rez;
-		//};
-
-		this.renderFormGroup = function() {
-			var rez = "";
-			rez = rez + "<div class=\"form-group\">" + "\n";
-			
-			rez += this.renderInput();
-
-			rez = rez + "</div>"
+		this.isComplex = function() {
+			var rez = false;
+			if (this.glyph.mustRender() || this.validation.sameLine) {
+				rez = true;
+			}
 			return rez;
 		}
 
-		this.render = function () {
-		    return this.renderFormGroup();
+		this.controlType =
+			[{
+					mode: "text",
+					use: true
+				}, {
+					mode: "email",
+					use: false
+				}, {
+					mode: "number",
+					use: false
+				}, {
+					mode: "password",
+					use: false
+				}
+
+			];
+
+		var rendered = false;
+		this.setRenderToFalse = function()
+		{
+		    rendered = false;
+		}
+		this.isRendered = function () {
+		    return rendered;
+		}
+		this.renderInput = function() {
+				var rez = "";
+				var renderGlyph = this.glyph.mustRender();
+				var renderLabel = this.label.mustRender();
+				frmControl.useThis = true;
+				//if (renderGlyph) {
+					
+				//} else {
+				//	frmControl.useThis = false;
+				//}
+				if (renderLabel) {
+					if (this.id == "") {
+						this.id = customGuid();
+					}
+					this.label.labelFor = this.id;
+					rez = rez + this.label.render();
+				}
+				var needContainer = (renderLabel && this.label.sameLine)||(this.validation.sameLine)
+				if (needContainer) {
+				    var divCSs = "col-sm-3 ";
+				    if (this.group > 0) {
+				        if (this.label.sameLine) {
+				            divCSs = "col-sm-9 ";
+				        } else {
+				            divCSs = "col-sm-12 ";
+				        }
+				    }
+					if (renderGlyph) {
+					    divCSs += "input-group";
+					} else {
+					    divCSs += "row";
+					}
+					rez += "<div class=\"" + divCSs + "\"" + ">" + "<!-- container -->" + "\n";
+				}
+				else {
+				    var divCSs = "col-sm-3 ";
+				    if (this.group > 0) {
+				        if (this.label.sameLine) {
+				            divCSs = "col-sm-9 ";
+				        } else {
+				            divCSs = "col-sm-12 ";
+				        }
+				    }
+				    if (this.label.sameLine==false)
+				    {
+				        divCSs += " row ";
+				    }
+				    if (renderGlyph) {
+				        divCSs += "input-group";
+				    }
+				    rez += "<div class=\"" + divCSs + "\"" + ">" + "<!-- container1 -->" + "\n";
+				}
+				var type = _.find(this.controlType, function(num) {
+					return num.use
+				});
+
+				//if (this.isComplex()) {
+
+				//    rez += "<div class=\"col-sm-3 input-group\"><!-- input reg -->"; +"\n";
+				//}
+				rez = rez + "\n" +  "<input type=\"" + type.mode + "\"";
+
+				if (hasValue(this.id)) {
+					rez = rez + " id=\"" + this.id + "\"";
+				}
+
+				var hasValidation = _.find(this.validation.items, function(num) {
+					return num.use
+				});
+				if (hasValidation) {
+					if (hasValue(this.name) == false) {
+						if (hasValue(this.id) == false) {
+							this.name = customGuid();
+						} else {
+							this.name = this.id;
+						}
+					}
+					this.validation.setControlName(this.name);
+				}
+
+				if (hasValue(this.name)) {
+					rez = rez + " name=\"" + this.name + "\"";
+				}
+
+				var css = this.cssValues.getCss();
+				rez = rez + " class=\"" + css + "\"";
+
+				if (this.placeholder != "") {
+					rez = rez + " placeholder=\"" + this.placeholder + "\"";
+				}
+
+				if (this.model != "") {
+					rez = rez + " ng-model=\"" + this.model + "\"";
+				} else {
+					if (this.value != "") {
+						rez = rez + " value=\"" + this.value + "\"";
+					}
+				}
+				rez += this.validation.renderValidationDirectives();
+
+				rez = rez + "/>" + '\n';
+
+				if (renderGlyph) {
+				    rez += "<span class=\"input-group-addon input-group-addon-remove\">" + "\n";
+					//rez += "            <button class=\"btn btn-success btn-add\" type=\"button\">" + "\n";
+					rez += "                <span class=\"glyphicon " + this.glyph.css + "\"" + "></span>" + "\n";
+					//rez += "            </button>" + "\n";
+					rez += "        </span>" + "\n";
+					//rez += "        </div>" +"<!--g1-->"+ "\n";
+					//rez += "        </div>" +"<!--g0-->"+ "\n";
+				}
+				if (this.validation.sameLine == false) {
+				    rez += this.validation.render();
+				}
+
+				if (needContainer) {
+				    rez += "</div>" + "<!--container-->" + "\n";
+				} else {
+				    rez += "</div>" + "<!--container1-->" + "\n";
+				}
+				
+				if (this.validation.sameLine) {
+
+				    rez += "<div class=\"col-sm-3 \">" + "<!-- validation -->"; +"\n";
+
+				    rez += this.validation.render();
+				    rez += "</div>" +"<!-- validation -->"; +"\n";
+				}
+                
+				//if (renderGlyph) {
+				//    if (renderLabel && this.label.sameLine == false) {
+				//        rez += "</div>" + "\n";
+				//    }
+				//}
+
+
+				return rez;
+			}
+			//this.renderControlGroup = function() {
+			//	var rez = "";
+			//	rez = rez + "<div class=\"control-group\">" + "\n";
+			//	rez += this.renderInput();
+			//	rez += "</div>" + "\n";
+			//	return rez;
+			//};
+
+		this.renderFormGroup = function() {
+			//this.label.isComplex(this.isComplex());
+			var rez = "";
+			rez = rez + "<div class=\"form-group clearfix\">" + "\n";
+
+			rez += this.renderInput();
+
+			rez = rez + "</div>" + "<!--form-group-->" + "\n";
+			return rez;
+		}
+
+		this.render = function() {
+		    if(rendered)
+		        return "";
+
+		    rendered = true;
+			return this.renderFormGroup();
 		}
 	};
 
-	var checkbox = function() {
-		this.type = "checkbox";
-		this.name = "";
-		this.id = "";
-		this.required = false;
-		this.model = "";
-		this.value = "";
-		this.label = new label();
-		this.css = "";
+	var checkbox = function () {
+	    this.type = "checkbox";
+	    this.name = "";
+	    this.id = "";
 
-		this.render = function() {
-			var rez = "";
-			if (this.label) {
-				if (this.id == "") {
-					this.id = customGuid();
-				}
-				this.label.labelFor = this.id;
-				rez = rez + this.label.render();
-			}
-			rez = rez + "<input type=\"checkbox\"";
+	    this.model = "";
+	    this.value = "";
+	    this.cssValues = new CssValues();
+	    this.cssValues.addItem("col-sm-1");
+	    this.cssValues.addItem("col-sm-2");
+	    this.cssValues.addItem("col-sm-3");
 
-			if (this.id != "") {
-				rez = rez + " id=\"" + this.id + "\"";
-			}
+	    this.placeholder = "";
+	    //this.controlGroup = false;
+	    this.group = 0;
+	    this.index = 0;
+	    this.validation = new validation();
+	    this.label = new label();
 
-			if (this.name != "") {
-				rez = rez + " name=\"" + this.name + "\"";
-			}
 
-			if (this.css != "") {
-				rez = rez + " class=\"" + this.css + "\"";
-			}
+	    this.isComplex = function () {
+	        var rez = false;
+	        if (this.validation.sameLine) {
+	            rez = true;
+	        }
+	        return rez;
+	    }
 
-			if (this.model != "") {
-				rez = rez + " ng-model=\"" + this.model + "\"";
-			} else {
-				if (this.value != "") {
-					rez = rez + " value=\"" + this.value + "\"";
-				}
-			}
+	   
 
-			rez = rez + "/>" + '\n';
+	    var rendered = false;
+	    this.setRenderToFalse = function () {
+	        rendered = false;
+	    }
+	    this.isRendered = function () {
+	        return rendered;
+	    }
+	    this.renderChk = function () {
+	        var rez = "";
+	        var renderLabel = this.label.mustRender();
+	        //if (renderGlyph) {
 
-			return rez;
-		}
-	}
+	        //} else {
+	        //	frmControl.useThis = false;
+	        //}
+	        if (renderLabel) {
+	            if (this.id == "") {
+	                this.id = customGuid();
+	            }
+	            this.label.labelFor = this.id;
+	            rez = rez + this.label.render();
+	        }
+	        
+	        var type = "checkbox"
+
+	        //if (this.isComplex()) {
+
+	        //    rez += "<div class=\"col-sm-3 input-group\"><!-- input reg -->"; +"\n";
+	        //}
+	        rez = rez + "\n" + "<input type=\"" + type + "\"";
+
+	        if (hasValue(this.id)) {
+	            rez = rez + " id=\"" + this.id + "\"";
+	        }
+
+	        var hasValidation = _.find(this.validation.items, function (num) {
+	            return num.use
+	        });
+	        if (hasValidation) {
+	            if (hasValue(this.name) == false) {
+	                if (hasValue(this.id) == false) {
+	                    this.name = customGuid();
+	                } else {
+	                    this.name = this.id;
+	                }
+	            }
+	            this.validation.setControlName(this.name);
+	        }
+
+	        if (hasValue(this.name)) {
+	            rez = rez + " name=\"" + this.name + "\"";
+	        }
+
+	        var css = this.cssValues.getCss();
+	        rez = rez + " class=\"" + css + "\"";
+
+	        if (this.placeholder != "") {
+	            rez = rez + " placeholder=\"" + this.placeholder + "\"";
+	        }
+
+	        if (this.model != "") {
+	            rez = rez + " ng-model=\"" + this.model + "\"";
+	        } else {
+	            if (this.value != "") {
+	                rez = rez + " value=\"" + this.value + "\"";
+	            }
+	        }
+	        rez += this.validation.renderValidationDirectives();
+
+	        rez = rez + "/>" + '\n';
+
+	       
+	        if (this.validation.sameLine == false) {
+	            rez += this.validation.render();
+	        }
+
+	       
+
+	        if (this.validation.sameLine) {
+
+	            rez += "<div class=\"col-sm-3 \">" + "<!-- validation -->"; +"\n";
+
+	            rez += this.validation.render();
+	            rez += "</div>" + "<!-- validation -->"; +"\n";
+	        }
+
+	        //if (renderGlyph) {
+	        //    if (renderLabel && this.label.sameLine == false) {
+	        //        rez += "</div>" + "\n";
+	        //    }
+	        //}
+
+
+	        return rez;
+	    }
+	    //this.renderControlGroup = function() {
+	    //	var rez = "";
+	    //	rez = rez + "<div class=\"control-group\">" + "\n";
+	    //	rez += this.renderInput();
+	    //	rez += "</div>" + "\n";
+	    //	return rez;
+	    //};
+
+	    this.renderFormGroup = function () {
+	        //this.label.isComplex(this.isComplex());
+	        var rez = "";
+	        rez = rez + "<div class=\"form-group clearfix\">" + "\n";
+
+	        rez += this.renderChk();
+
+	        rez = rez + "</div>" + "<!--form-group-->" + "\n";
+	        return rez;
+	    }
+
+	    this.render = function () {
+	        if (rendered)
+	            return "";
+
+	        rendered = true;
+	        return this.renderFormGroup();
+	    }
+	};
 
 	var glyph = function() {
 		this.type = "glyph";
@@ -394,15 +719,21 @@ function NestedListsDemoController($scope) {
 		this.value = "";
 		this.css = "";
 
+		this.mustRender = function() {
+			var rez = false;
+			if (hasValue(this.css) || hasValue(this.model)) {
+				rez = true;
+			}
+			return rez;
+		}
 		this.render = function() {
 			var rez = " <span class=\"glyphicon ";
 			rez += this.cssValues;
-			if(this.model != "")
-			{
-				rez += "{{" + this.model + "}}"; 
-			}else{
+			if (this.model != "") {
+				rez += "{{" + this.model + "}}";
+			} else {
 				rez = rez + "\"";
-			
+
 			}
 			return rez;
 		}
@@ -421,8 +752,8 @@ function NestedListsDemoController($scope) {
 		this.formGroup = true;
 
 		this.label = new label();
-		
-		
+
+
 		this.cssValues = new CssValues();
 		this.cssValues.addItem("control-label");
 		this.cssValues.addItem("col-sm-1");
@@ -468,79 +799,62 @@ function NestedListsDemoController($scope) {
 
 			rez = rez + "/>" + '\n';
 
-			rez = rez + "</div>"
+			rez = rez + "</div>" + "\n"
 			return rez;
 		}
 
 		this.render = function() {
-		   
 
-		     return this.render();
+
+			return this.render();
 		}
 	};
 
 
-	$scope.renderAll = function () {
+	$scope.renderAll = function() {
 		$scope.models.htmlv = $scope.models.dropzones["dz1"].render();
 	}
+	//form - horizontal
 	$scope.models = {
 		selected: null,
 		htmlv: "",
-		templates: [{
-				type: "item",
-				id: 2
-			}, {
-				type: "container",
-				id: 1,
-				columns: [
-					[],
-					[]
-				]
-			}, {
-				type: "text",
-				id: 3
-			}, {
-				type: "checkbox",
-				id: 4
-			}
-
-		],
-
+		templates: [],
 		dropzones: {
-		    dz1: {
-		        form:
-                    {
-                        name:"",
-				        renderStart :function()
-				        {
-				            if (!hasValue(this.name))
-				            {
-				                this.name = customGuid();
-				            }
-				            var rez  = "<div class=\"container\">" + '\n';
-				            rez +=  "   <div class=\"panel panel-default\">"+ '\n';
-				            rez +=  "       <div class=\"panel-body\">" + '\n';
-
-				            rez += "            <ng-form name=" + this.name + "\"" + " class=\"form-horizontal\" novalidate>" + '\n';
-
-				            return rez;
-				        },
-
-                        renderEnd :function()
-                        {
-                            var rez = "";
-                            rez += "            </ng-form>" + '\n'
-						    rez  = "        </div>"+ '\n';
-						    rez  += "</div>"+ '\n';
-						    rez += "</div>"+ '\n';
-						     
-						    return rez;
+			dz1: {
+				form: {
+					name: "",
+					css: "",
+					renderStart: function() {
+						if (!hasValue(this.name)) {
+							this.name = customGuid();
 						}
-                    },
+						var rez = "<div class=\"container\">" + '\n';
+						rez += "   <div class=\"panel panel-default\">" + '\n';
+						rez += "       <div class=\"panel-body\">" + '\n';
+
+						rez += "            <ng-form name=" + this.name + "\"" + " class=\"" + this.css + "\"" + " novalidate>" + '\n';
+
+						return rez;
+					},
+
+					renderEnd: function() {
+						var rez = "";
+						rez += "            </ng-form>" + '\n';
+						rez += "        </div>" + '\n';
+						rez += "</div>" + '\n';
+						rez += "</div>" + '\n';
+
+						return rez;
+					},
+					load: function(obj) {
+					    this.name = obj.name;
+					    this.css = obj.css;
+					}
+				},
 				items: [],
-				add: function(index, obj) {
+				add: function(obj) {
 					if (obj == null || obj == "")
-						return;
+						return null;
 
 					var toAdd = null;
 					switch (obj.type) {
@@ -554,19 +868,112 @@ function NestedListsDemoController($scope) {
 								toAdd = new checkbox();
 								break;
 							}
+					    case "lbl":
+					        {
+					            toAdd = new label();
+					            break;
+					        }
 					}
-					$scope.models.dropzones["dz1"].items.push(toAdd);
-					//$scope.$apply(function() {
-					$scope.models.htmlv = $scope.models.dropzones["dz1"].render();
-					//}); 
 
+					//$scope.$apply(function() {
+					//$scope.models.htmlv = $scope.models.dropzones["dz1"].render();
+					//}); 
+					return toAdd;
+				},
+				load: function(obj) {
+					if (obj == null || obj == "")
+						return;
+					var v = $scope.models.dropzones["dz1"];
+					v.items = [];
+					v.form.load(obj.form);
+
+					for (var i = 0; i < obj.items.length; i++) {
+						var dbObj = obj.items[i];
+						var it = v.add(dbObj);
+						var merged = realMerge(it, dbObj);
+
+						v.items.push(merged);
+					}
+					$scope.models.htmlv = v.render();
 				},
 				render: function() {
 					var model = $scope.models.dropzones["dz1"];
 					var rez = model.form.renderStart();
 
-					for (var i = 0; i < model.items.length; i++) {
-						rez = rez + model.items[i].render();
+					var orderedItems = _.sortBy(model.items, 'index');
+
+					for (var i = 0; i < orderedItems.length; i++)
+					    {
+					    var itt = orderedItems[i];
+					        itt.setRenderToFalse();
+					    }
+					for (var i = 0; i < orderedItems.length; i++) {
+					    var itt = orderedItems[i];
+					    if (itt.group > 0) {
+					        var groupItems = _.filter(orderedItems, function (num) {
+					            return num.group == itt.group;
+					        });
+					        var forCss = [];
+					        switch (groupItems.length)
+					        {
+					            case 1:
+					                {
+					                    forCss.push(12);
+					                    break;
+					                }
+					            case 2:
+					                {
+					                    forCss.push(6);
+					                    forCss.push(6);
+					                    break;
+					                }
+					            case 3:
+					                {
+					                    forCss.push(4);
+					                    forCss.push(4);
+					                    forCss.push(4);
+					                    break;
+					                }
+					            case 4:
+					                {
+					                    forCss.push(3);
+					                    forCss.push(3);
+					                    forCss.push(3);
+					                    forCss.push(3);
+					                    break;
+					                }
+					            case 5:
+					                {
+					                    forCss.push(4);
+					                    forCss.push(4);
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    break;
+					                }
+					            case 6:
+					                {
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    forCss.push(2);
+					                    break;
+					                }
+					        }
+					        var classValue = "col-xs-";
+
+					        for (var x = 0; x < groupItems.length; x++)
+					        {
+					            var pc = classValue + forCss[x];
+					            rez += "<div class =\"" + pc + "\"" + ">" + "\n";
+                                rez += groupItems[x].render();
+                                rez += "</div>";
+					        }
+					    } else {
+					        rez = rez + itt.render();
+					    }
 					}
 
 					rez = rez + model.form.renderEnd();
@@ -577,6 +984,11 @@ function NestedListsDemoController($scope) {
 		}
 
 	};
+
+	$scope.models.templates.push(new text());
+	$scope.models.templates.push(new label());
+	$scope.models.templates.push(new checkbox());
+
 	$scope.jsObj = null;
 	$scope.$watch('models.dropzones', function(model) {
 		$scope.modelAsJson = angular.toJson(model, true);
@@ -585,22 +997,15 @@ function NestedListsDemoController($scope) {
 
 
 
-	$scope.$watch('models.selected', function(model) {
-		if (!model)
-			return;
-		//$scope.$apply(function() {
-		$scope.jsObj = null;
+	$scope.addControl = function(it) {
+		var v = $scope.models.dropzones["dz1"];
+		var newObj = v.add(it);
+		v.items.push(newObj);
 
-		//});
-		setTimeout(function() {
-			$scope.$apply(function() {
-				$scope.jsObj = model;
-			});
-		}, 10);
-
-	}, true);
-
-};
+		$scope.models.htmlv = v.render();
+	}
+	$scope.getForms();
+});
 
 app.directive('htmlRender', function($compile) {
 		return {
@@ -645,10 +1050,50 @@ app.directive('htmlRender', function($compile) {
 				jQuery(document).on('keypress', function(e) {
 					scope.$apply(scope.keyPressed(e));
 				});
+				jQuery(document).on('click', function (e) {
+				    scope.$apply(scope.findElement(e));
+				    //debugger;
+				    //alert("a");
+				    //scope.$apply(scope.keyPressed(e));
+				});
+				
 			}
 		};
 	})
-	.directive('ngModelOnblur', function() {
+	.directive('prism', function($timeout, $parse) {
+		return {
+		    restrict: 'A',
+		    scope: {
+		        content: "="
+		    },
+			link: function(scope, element, attrs) {
+				scope.$watch("content", function (newValue, oldValue) {
+					if (newValue) {
+						$timeout(function() {
+						    Prism.highlightElement(element[0]);
+						}, 10);
+					}
+				});
+			}
+		}
+	})
+.directive('nagPrism', [function() {
+    return {
+        restrict: 'A',
+        scope: {
+            source: '@'
+        },
+        link: function(scope, element, attrs) {
+            scope.$watch('source', function(v) {
+                if(v) {
+                    Prism.highlightElement(element.find("code")[0]);
+                }
+            });
+        },
+        template: "<code ng-bind='source'></code>"
+    };
+}])
+.directive('ngModelOnblur', function() {
 		// override the default input to update on blur
 		// from http://jsfiddle.net/cn8VF/
 		return {
@@ -714,7 +1159,7 @@ app.directive('htmlRender', function($compile) {
 						if (type == "[object Function]") {
 							return "Function";
 						} else {
-							return "Literal1" +type + mt;
+							return "Literal1" + type + mt;
 						}
 					}
 				};
@@ -864,12 +1309,11 @@ app.directive('htmlRender', function($compile) {
 				// start template
 				if (scope.type == "object") {
 					var template = '<i ng-click="toggleCollapse()" class="glyphicon" ng-class="chevron"></i>' + '<span class="jsonItemDesc">' + objectName + '</span>' +
-					 '<div class="jsonContents" ng-hide="collapsed">'
+						'<div class="jsonContents" ng-hide="collapsed">'
 						// repeat
 						+ '<span class="block" ng-hide="key.indexOf(\'_\') == 0" ng-repeat="(key, val) in child ">'
 						// object key
-						+ '<span class="jsonObjectKey">' + '<input class="keyinput" type="text" ng-model="newkey" ng-init="newkey=key" ' + 'ng-blur="moveKey(child, key, newkey)"/>'
-						+ '{{getType(key)}}'
+						+ '<span class="jsonObjectKey">' + '<input class="keyinput" type="text" ng-model="newkey" ng-init="newkey=key" ' + 'ng-blur="moveKey(child, key, newkey)"/>' + '{{getType(key)}}'
 						// delete button
 						+ '<i class="deleteKeyBtn glyphicon glyphicon-trash" ng-click="deleteKey(child, key)"></i>' + '</span>'
 						// object value

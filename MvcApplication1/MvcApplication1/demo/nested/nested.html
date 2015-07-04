@@ -5,65 +5,61 @@ makes an element draggable and will transfer the object that was
 assigned to it. If an element was dragged away, you have to remove
 it from the original list yourself using the dnd-moved attribute -->
 
-<!-- This template is responsible for rendering a container element. It uses
-the above list template to render each container column -->
-<script type="text/ng-template" id="container.html">
-<div class="container-element box box-blue">
-    <h3>Container {{item.id}}</h3>
-    <div class="column" ng-repeat="list in item.columns" ng-include="'list.html'"></div>
-    <div class="clearfix"></div>
-</div>
-</script>
-<!-- Template for a normal list item -->
-<script type="text/ng-template" id="item.html">
-<div class="item">Item {{item.id}}</div>
-</script>
-<!-- Main area with dropzones and source code -->
+
 
  <shortcut></shortcut>
  
 <div class="col-md-10">
-    <div class="row">
-        <div ng-repeat="(zone, list) in models.dropzones" class="col-md-hk">
-            <div class="dropzone box box-yellow">
-                <h3>Dropzone {{zone}} {{list}}</h3>
-                <ul dnd-list="list">
-                    <li ng-repeat="item in list.items"
-                        dnd-draggable="item"
-                        dnd-effect-allowed="move"
-                        dnd-moved="list.splice($index, 1)"
-                        dnd-selected="models.selected = item"
-                        ng-class="{selected: models.selected === item}"
-                          
-                        >
-                    </li>
-                </ul>
-            </div>                                                                                                                          
+    
+    <div class="form-group">
+        <label>ohuioio</label>
+        <input type="text" class="form-control" value="kk">
+    </div>
+    <div class="form-group">
+        <label for="exampleInputPassword1">Password <a href="/sessions/forgot_password">(forgot password)</a></label>
+        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+    </div>
+    <div class="container">
+        <div class="hu9yh">
+            <div class="hui">
+                <ng-form name="ddd&quot;" class="higi" novalidate="">
+                    <div class="form-group">
+                        <label for="ce2f">ohio</label>
+                        <input type="text" id="ce2f" class="" value="kk">
+                    </div>
+                </ng-form>
+            </div>
         </div>
     </div>
+    <!--ng-change="formddChanged(it)"-->
+    <button ng-click="saveJson()">Save</button>
+
+    <!--<select class="form-control"
+            ng-model="formID"
+            ng-options="it.ID as it.FormName for it in forms"
+            ng-change="formddChanged(it)">
+    </select>-->
+
+    <select ng-model="frm.formID" ng-options="it.ID as it.FormName for it in forms"></select>
+
+
 
     <div ng-bind-html="models.htmlv | to_trusted"></div>
-   <!-- <span ng-click="renderAll()">Render</span> -->
-     
-    <!-- <div class="jsonView">
-        <json child="jsObj" default-collapsed="false" type="object"></json>
-    </div> -->
+    
 
     <json-tree json="jsObj" node="nodeOptions" collapsed-level="1"></json-tree>
     
-<!--     <h2>Generated Model</h2>
-<pre>{{modelAsJson}}</pre> -->
 
-<!-- <div view-source="models.htmlv" highlight-lines="{markup: '1-18, 20-28, 40-42, 57-68, 78-82'}"></div> -->
 
-<pre>
-<code class="language-markup">
+ <!--<div view-source="models.htmlv" highlight-lines="{markup: '1-18, 20-28, 40-42, 57-68, 78-82'}"></div>--> 
 
-    {{models.htmlv}}
+    <!--<pre prism content="models.htmlv">
+    <code class="language-markup">
 
+   
 </code>
-</pre>
-
+</pre>-->
+    <pre nag-prism source="{{models.htmlv}}" class="language-markup"></pre>
 
 </div>
 <!-- Sidebar -->
@@ -73,28 +69,12 @@ the above list template to render each container column -->
     <ul>
         <!-- The toolbox only allows to copy objects, not move it. After a new
         element was created, dnd-copied is invoked and we generate the next id -->
-        <li ng-repeat="item in models.templates"
-            dnd-draggable="item"
-            dnd-effect-allowed="copy"
-            dnd-copied="item.id = item.id + 1"
-
-            >
-            <button type="button" class="btn btn-default btn-lg" disabled="disabled">{{item.type}}</button>
+        <li ng-repeat="item in models.templates">
+            <button type="button" class="btn btn-default btn-lg" ng-click="addControl(item)" >{{item.type}}</button>
         </li>
     </ul>
 </div>
 
-{{models.selected}}
-<div ng-if="models.selected" class="box box-grey box-padding">
-    <h3>Selected</h3>
-    <strong>Type: </strong> {{models.selected.type}}<br>
-    <input type="text" ng-model="models.selected.id" class="form-control" style="margin-top: 5px" />
-</div>
-<div class="trashcan box box-grey box-padding">
-    <!-- If you use [] as referenced list, the dropped elements will be lost -->
-    <h3>Trashcan</h3>
-    <ul dnd-list="[]">
-        <li><img src="nested/trashcan.jpg"></li>
-    </ul>
-</div>
+
+
 </div>
